@@ -10,44 +10,56 @@ const countryInfoElem = document.querySelector('.country-info');
 
 const DEBOUNCE_DELAY = 300;
 
-function onCountryFormInput(event) {
-  let countryQuery = event.target.value.trim();
-
-  console.log(fetchCountries(countryQuery));
-
-  if (countryQuery) {
-    return fetchCountries(countryQuery)
-      .then(data => onChoseMarkup(data))
-      .catch(err => {
-        Notify.failure('Oops, there is no country with that name');
-      });
-  }
-}
-
 inputCountryEl.addEventListener(
   'input',
   debounce(onCountryFormInput, DEBOUNCE_DELAY)
 );
 
-function onChoseMarkup(data) {
-  if (countryArray === 1) {
+function onCountryFormInput(event) {
+  let countryQuery = event.target.value.trim();
+
+  if (countryQuery === '') {
     countryListElem.innerHTML = '';
-    return createCountryCards(countryArray);
+    countryInfoElem.innerHTML = '';
+    return;
   }
-  if (countryArray.length >= 2 && countryArray.length <= 10) {
-    countryInfoElem.innerHTML = ''
-    return createCountries(countryArray);
-  }
+
+  if (countryQuery) {
+    fetchCountries(countryQuery)
+      .then(data => onChoseMarkup(data))
+      .catch(err => {
+        Notify.failure('Oops, there is no country with that name');
+    });
+  };
+
+  countryListElem.innerHTML = '';
+  countryInfoElem.innerHTML = '';
 }
 
-function createCountryCards(countryInfo) {
-  const markup = countryInfo
+function onChoseMarkup(countryArray) {
+  if (countryArray.length === 1) {
+    countryListElem.innerHTML = '';
+    return createCountryCard(countryArray);
+  }
+  if (countryArray.length >= 2 && countryArray.length <= 10) {
+    countryInfoElem.innerHTML = '';
+    return createCountryList(countryArray);
+  }
+  return Notify.info(
+    'Too many matches found. Please enter a more specific name.'
+  );
+};
+
+function createCountryCard(data) {
+  const markup = data
     .map(el => {
       return `
-        <h2 class="country_title"><span class="country_flag">${el.flags.svg}</span>${el.name.official}</h2>
-        <p class="country-text"><b>Capital:</b>${el.capital}</p>
-        <p class="country-text"><b>Population:</b>${el.population}</p>
-        <p class="country-text"><b>Languages:</b>${el.languages}</p>
+        <h2 class="country_title"><img src="${
+          el.flags.svg
+        }" alt="d" width="40" height="20">${` `}${el.name.official}</h2>
+        <p class="country-text"><b>Capital: </b>${el.capital}</p>
+        <p class="country-text"><b>Population: </b>${el.population}</p>
+        <p class="country-text"><b>Languages: </b>${Object.values(el.languages).join(', ')}</p>
         `;
     })
     .join('');
@@ -55,12 +67,11 @@ function createCountryCards(countryInfo) {
   countryInfoElem.innerHTML = markup;
 }
 
-function createCountries(countryInfo) {
-  const markup = countryInfo
+function createCountryList(data) {
+  const markup = data
     .map(el => {
       return `<li class='country-item'>
-                <img src="${el.flags.svg}" alt="d" width="40" height="20">
-                <p>${el.name.official}</p>
+                <h4 class="country_title"><img src="${el.flags.svg}" alt="d" width="40" height="20">${` `}${el.name.official}</h2>
               </li>
     `;
     })
